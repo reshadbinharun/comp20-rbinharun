@@ -14,7 +14,13 @@
 <div id="lyrics"></div>
 
 <script>
-	// Complete this section and create a CSS file named style.css
+	var video = document.getElementById("a_classic");
+	video.addEventListener("timeUpdate", function() {
+		if (timeUpdate < 1:00){
+			document.getElementById("lyrics").innerHTML = "Children have you ever met the Boogeyman before";
+		};
+	});
+	
 </script>
 </body>
 </html>	
