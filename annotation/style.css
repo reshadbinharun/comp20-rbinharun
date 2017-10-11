@@ -1,0 +1,9 @@
+#lyrics{
+	align-content: center;
+	width: 500px;
+	height: 50px;
+	border-width: 2px;
+	border-color: blue;
+	background-color: #99ccff;
+	font-weight: bold;
+}
