@@ -1,70 +1,77 @@
-
+var myLogin = "k7okUNPy";
+var myLat;
+var myLng;
+var me = new google.maps.LatLng(myLat,myLng);
+var request = new XMLHttpRequest();
+var messages;
+var myOptions = {
+    zoom: 13,
+    center: me,
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+var map;
+var marker;
+var infoWindow = new google.maps.InfoWindow();
+var landmark_icon = {
+    url: 'landmark.png',
+    scaledSize: new google.maps.Size(20,20)
+};
+var peep_icon = {
+    url: 'bender.png',
+    scaledSize: new google.maps.Size(20,20)
+};
+var peepInfo = [];
+var peepInfoWindow = [];
+var peep_markers = [];
+var peepDist;
 
 function getMyLocation() {
-    console.log("in getMyLocation");
-
+    map = new google.maps.Map(document.getElementById("map"), myOptions);
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
-            login = "k7okUNPy";
             myLat = position.coords.latitude;
             myLng = position.coords.longitude;
-            var elem = document.getElementById("info");
-            me = new google.maps.LatLng(myLat, myLng);
-            elem.innerHTML = "<h1>You are in " + myLat + ", " + myLng + "</h1>";
-            console.log("You are in " + myLat + "," + myLng);
-            var request = new XMLHttpRequest();
-            request.open("POST", "https://defense-in-derpth.herokuapp.com/sendLocation", true);
-            console.log("request posted");
-            request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            request.onreadystatechange = function() {
-                if (request.readyState == 4 && request.status == 200) {
-                    rawData = request.responseText;
-                    messages = JSON.parse(rawData);
-                    console.log("message parsed");
-                    console.log(messages);
-                    renderMap_me();
-                    getData();
-                    dispPeeps();
-                    dispLand();
-                    polyL();
-                }
-            }
-    request.send("login="+ login +"&lat=" + myLat + "&" + "lng=" + myLng);
-    console.log("request sent");
-            
-        });
-
+            renderMap();
+            sendReq();
+        })
     } else {
         alert("Unfortunately geolocation is not supported by your web browser.");
     }
-}
+};
+ 
+function sendReq() {
+    request.open("POST", "https://defense-in-derpth.herokuapp.com/sendLocation", true);
+    request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    request.onreadystatechange = function() {
+        if (request.readyState == 4 && request.status == 200) {
+            rawData = request.responseText;
+            messages = JSON.parse(rawData);
+            dispPeeps();
+            dispLand();
+            //console.log("message parsed");
+            //console.log(messages);
+        }
+    }
+    request.send("login="+ myLogin +"&lat=" + myLat + "&" + "lng=" + myLng);
+    console.log("request sent");
+            
+};
 
-function getData() {
-    console.log("in getData");
-   
-}
 
-function renderMap_me()
+function renderMap()
 {
     console.log("in render map");
-    
-    var myOptions = {
-        zoom: 13, // The larger the zoom number, the bigger the zoom
-        center: me,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
-    var map = new google.maps.Map(document.getElementById("map"), myOptions);
-    //var map;
-    //var elem = document.getElementById("map");
-    console.log("map created");
+    me = new google.maps.LatLng(myLat,myLng);
+    console.log("me set");
     map.panTo(me);
-    var marker = new google.maps.Marker({
+    console.log("panned");
+    marker = new google.maps.Marker({
         position: me,
-        title: login
-        //icon key value pair, 3 different types of markers
+        title: myLogin
     });
+    console.log("marker defined");
     marker.setMap(map);
-        
+    console.log("marker set");    
     // Open info window on click of marker
     google.maps.event.addListener(marker, 'click', function() {
         infowindow.setContent(marker.title);
@@ -73,83 +80,75 @@ function renderMap_me()
     console.log("map render complete");
 };
 
-function renderMap(mark)
-{
-    console.log("in render map");
-    
-    var myOptions = {
-        zoom: 13, // The larger the zoom number, the bigger the zoom
-        //center: me,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
-    var map = new google.maps.Map(document.getElementById("map"), myOptions);
-    //var map;
-    //var elem = document.getElementById("map");
-    console.log("map created");
-  
-    // Update map and go there...
-    //map.panTo(me);
-    
-    // Create a marker; consider removing
-    var marker = new google.maps.Marker({
-        position: mark,
-        title: login
-        //icon key value pair, 3 different types of markers
-    });
-    marker.setMap(map);
-        
-    // Open info window on click of marker
-    google.maps.event.addListener(marker, 'click', function() {
-        infowindow.setContent(marker.title);
-        infowindow.open(map, marker);
-    });
-    console.log("map render complete");
-};
-//function to display people on map
+
 function dispPeeps() {
     console.log("in dispPeeps");
-        for (var i = 0; i < messages.people.length; i++){
-            var myLat = messages.people[i].lat;
-            var myLng = messages.people[i].lng;
-            var login = messages.people[i].login;
-            var mark = new google.maps.LatLng(myLat, myLng);
-            renderMap(mark);
-
-        }
-
+    for (var i = 0; i < messages.people.length; i++){
+        var peepLat = messages.people[i]["lat"];
+        var peepLng = messages.people[i]["lng"];
+        var peepLogin = messages.people[i]["login"];
+        peepPos = new google.maps.LatLng(peepLat, peepLng);
+        peepDist = google.maps.geometry.spherical.computeDistanceBetween(me, peepPos);   
+        peepMarkers[i] = new google.maps.Marker({
+            position: peepPos,
+            title: peepLogin,
+            icon: peep_icon
+        });
+        peepInfo[i] = "User "+peepLogin+"is"+peepDist+"away from you.";
+        peepInfoWindow[i] = new google.maps.InfoWindow();
+        google.maps.event.addListener(peepMarkers[i], 'click', function(){
+            peepInfoWindow[i].setContent(peepInfo[i]);
+            peepInfoWindow[i].open(map,peepMarkers[i]);
+        });
+        peepMarkers[i].setMap(map);
+    }
 };
+
 //function to display landmarks on map
 function dispLand() {
     console.log("in dispLand");
-    minDist = 100;
-    minLoc = 0;
+    minDist = 10000;
+    minLocName = " ";
+    var landLat;
+    var landLng;
+    minLat;
+    minLng;
+
     for (var i = 0; i < messages.landmarks.length; i++){
-        var myLat = messages.landmarks[i].geometry.coordinates[1];
-        var myLng = messages.landmarks[i].geometry.coordinates[2];
-        var login = messages.landmarks[i].properties.Location_Name;
-        var mark = new google.maps.LatLng(myLat, myLng);
-        if(calcDist(me, mark) < minDist) {
-            minDist = calcDist(me, mark);
-            minLoc = login;
+        landLat = messages.landmarks[i].geometry.coordinates[0];
+        landLng = messages.landmarks[i].geometry.coordinates[1];
+        landName = messages.landmarks[i].properties.Location_Name;
+        landPos = new google.maps.LatLng(landLat, landLng);
+        if(google.maps.geometry.spherical.computeDistanceBetween(me, landPos) < minDist) {
+            minDist = google.maps.geometry.spherical.computeDistanceBetween(me, landPos);
+            minLocName = landName;
+            minLat = landlat;
+            minLng = landLng;
         }
-
-        renderMap(mark);
-       
-
-    }
-
+        landMarkers[i] = new google.maps.Marker({
+            position: landPos,
+            title: landname,
+            icon: landmark_icon
+        });
+        landInfo[i] = landName;
+        landInfoWindow[i] = new google.maps.InfoWindow();
+        google.maps.event.addListener(landMarkers[i], 'click', function(){
+            landInfoWindow[i].setContent(landInfo[i]);
+            landInfoWindow[i].open(map,landMarkers[i]);
+        });
+        landmarkers[i].setMap(map);
+         var closest = [
+            {lat: myLat, lng: myLng},
+            {lat: minLat, lng: minLng}
+        ];
+        var polyL = new.google.maps.Polyline({
+            path: closest,
+            geodesic: true,
+            strokeColor: '#008000',
+            strokeOpacity: 3.0,
+            strokeWeight: 5
+        });
+        polyL.setMap(map);
 
 };
 
-function calcDist(me, mark) {
-    console.log("in calcDist");
-    return google.maps.geometry.spherical.computeDistanceBetween(me, mark);
-
-};
-
-//function to add polyline between you and map
-function polyL() {
-    console.log("in polyL");
-    //check google maps api for polyline
-};
-//google.maps.geometry.spherical.computeDistanceBetween(latLngA,latLngB);
