@@ -48,8 +48,6 @@ function sendReq() {
             messages = JSON.parse(rawData);
             dispPeeps();
             dispLand();
-            //console.log("message parsed");
-            //console.log(messages);
         }
     }
     request.send("login="+ myLogin +"&lat=" + myLat + "&" + "lng=" + myLng);
@@ -60,29 +58,22 @@ function sendReq() {
 
 function renderMap()
 {
-    console.log("in render map");
     me = new google.maps.LatLng(myLat,myLng);
-    console.log("me set");
     map.panTo(me);
-    console.log("panned");
     marker = new google.maps.Marker({
         position: me,
         title: myLogin
     });
-    console.log("marker defined");
     marker.setMap(map);
-    console.log("marker set");    
     // Open info window on click of marker
     google.maps.event.addListener(marker, 'click', function() {
         infowindow.setContent(marker.title);
         infowindow.open(map, marker);
     });
-    console.log("map render complete");
 };
 
 
 function dispPeeps() {
-    console.log("in dispPeeps");
     for (var i = 0; i < messages.people.length; i++){
         var peepLat = messages.people[i]["lat"];
         var peepLng = messages.people[i]["lng"];
@@ -106,7 +97,6 @@ function dispPeeps() {
 
 //function to display landmarks on map
 function dispLand() {
-    console.log("in dispLand");
     minDist = 10000;
     minLocName = " ";
     var landLat;
@@ -141,7 +131,7 @@ function dispLand() {
             {lat: myLat, lng: myLng},
             {lat: minLat, lng: minLng}
         ];
-        var polyL = new.google.maps.Polyline({
+        var polyL = new google.maps.Polyline({
             path: closest,
             geodesic: true,
             strokeColor: '#008000',
@@ -150,5 +140,6 @@ function dispLand() {
         });
         polyL.setMap(map);
 
+    }
 };
 
