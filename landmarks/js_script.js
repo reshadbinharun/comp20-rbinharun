@@ -1,6 +1,6 @@
 var myLogin = "k7okUNPy";
-var myLat;
-var myLng;
+var myLat = 0;
+var myLng = 0;
 var me = new google.maps.LatLng(myLat,myLng);
 var request = new XMLHttpRequest();
 var messages;
@@ -11,7 +11,7 @@ var myOptions = {
     };
 var map;
 var marker;
-var infoWindow = new google.maps.InfoWindow();
+var infowindow = new google.maps.InfoWindow();
 var landmark_icon = {
     url: 'landmark.png',
     scaledSize: new google.maps.Size(20,20)
@@ -22,8 +22,16 @@ var peep_icon = {
 };
 var peepInfo = [];
 var peepInfoWindow = [];
-var peep_markers = [];
+var peepMarkers = [];
 var peepDist;
+var landInfo = [];
+var landInfoWindow = [];
+var landMarkers = [];
+var landDist;
+var landDetails;
+var minDist = 10000;
+var minLocName;
+
 
 function getMyLocation() {
     map = new google.maps.Map(document.getElementById("map"), myOptions);
@@ -51,7 +59,6 @@ function sendReq() {
         }
     }
     request.send("login="+ myLogin +"&lat=" + myLat + "&" + "lng=" + myLng);
-    console.log("request sent");
             
 };
 
@@ -63,12 +70,6 @@ function renderMap()
     marker = new google.maps.Marker({
         position: me,
         title: myLogin
-    });
-    marker.setMap(map);
-    // Open info window on click of marker
-    google.maps.event.addListener(marker, 'click', function() {
-        infowindow.setContent(marker.title);
-        infowindow.open(map, marker);
     });
 };
 
@@ -85,49 +86,47 @@ function dispPeeps() {
             title: peepLogin,
             icon: peep_icon
         });
-        peepInfo[i] = "User "+peepLogin+"is"+peepDist+"away from you.";
+        peepInfo[i] = "User "+peepLogin+" is "+ (peepDist*0.000621371).toFixed(2) +" mi away from you.";
         peepInfoWindow[i] = new google.maps.InfoWindow();
-        google.maps.event.addListener(peepMarkers[i], 'click', function(){
-            peepInfoWindow[i].setContent(peepInfo[i]);
-            peepInfoWindow[i].open(map,peepMarkers[i]);
-        });
+    }
+    for (var i = 0; i < peepMarkers.length; i++){
+        google.maps.event.addListener(peepMarkers[i], 'click', (function(i){
+            return function(){
+                peepInfoWindow[i].setContent(peepInfo[i]);
+                peepInfoWindow[i].open(map,peepMarkers[i]);
+            }
+        })(i));
         peepMarkers[i].setMap(map);
     }
 };
 
-//function to display landmarks on map
 function dispLand() {
-    minDist = 10000;
-    minLocName = " ";
     var landLat;
     var landLng;
-    minLat;
-    minLng;
+    var minLat;
+    var minLng;
 
     for (var i = 0; i < messages.landmarks.length; i++){
-        landLat = messages.landmarks[i].geometry.coordinates[0];
-        landLng = messages.landmarks[i].geometry.coordinates[1];
-        landName = messages.landmarks[i].properties.Location_Name;
+        var landLat = messages.landmarks[i].geometry.coordinates[1];
+        var landLng = messages.landmarks[i].geometry.coordinates[0];
+        var landName = messages.landmarks[i].properties.Location_Name;
+        var landDetails = messages.landmarks[i].properties.Details;
         landPos = new google.maps.LatLng(landLat, landLng);
         if(google.maps.geometry.spherical.computeDistanceBetween(me, landPos) < minDist) {
             minDist = google.maps.geometry.spherical.computeDistanceBetween(me, landPos);
             minLocName = landName;
-            minLat = landlat;
+            minLat = landLat;
             minLng = landLng;
         }
         landMarkers[i] = new google.maps.Marker({
             position: landPos,
-            title: landname,
+            title: landName,
             icon: landmark_icon
         });
-        landInfo[i] = landName;
+        landInfo[i] = landName + ": " + landDetails+ " ";
         landInfoWindow[i] = new google.maps.InfoWindow();
-        google.maps.event.addListener(landMarkers[i], 'click', function(){
-            landInfoWindow[i].setContent(landInfo[i]);
-            landInfoWindow[i].open(map,landMarkers[i]);
-        });
-        landmarkers[i].setMap(map);
-         var closest = [
+        landMarkers[i].setMap(map);
+        var closest = [
             {lat: myLat, lng: myLng},
             {lat: minLat, lng: minLng}
         ];
@@ -136,10 +135,28 @@ function dispLand() {
             geodesic: true,
             strokeColor: '#008000',
             strokeOpacity: 3.0,
-            strokeWeight: 5
+            strokeWeight: 2
         });
         polyL.setMap(map);
 
     }
+    for (var i = 0; i < landMarkers.length; i++){
+        google.maps.event.addListener(landMarkers[i], 'click', (function(i){
+            return function(){
+                landInfoWindow[i].setContent(landInfo[i]);
+                landInfoWindow[i].open(map,landMarkers[i]);
+            }
+        })(i));
+        landMarkers[i].setMap(map);
+    }
+    myMark();
 };
 
+function myMark() {
+    marker.setMap(map);
+    var info_window_content = marker.title + " Your closest landmark is:" + minLocName + ". It is " + (minDist*0.000621371).toFixed(2) + "mi away."; 
+    google.maps.event.addListener(marker, 'click', function() {
+        infowindow.setContent(info_window_content);
+        infowindow.open(map, marker);
+    });
+};
