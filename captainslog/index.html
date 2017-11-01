@@ -10,7 +10,7 @@
     <script>
         var log = [];
         $(document).ready(function(){
-            localStorage.//load captain logs entries before user does anything
+            localStorage.getItem("captain_log");//load captain logs entries before user does anything
             $('#msg').keydown(function(e){
             console.log("in enter function", e)
             if (e.keyCode == 13){
@@ -19,14 +19,26 @@
                     date: new Date()
                 })
                 localStorage.setItem("captain_log", JSON.stringify(log));
-                $("#log").prepend()
                 //$('#log').prepend()
             }
-           
             });
-            //$("#log").html() //day month date time year
+            //$('#log').prepend()
+            $("#log").html(localStorage.getItem("captain_log")); //day month date time year
                     
         })
+
+        
+            // Your work will be done here...
+    </script>
+</head>
+
+<body>
+    <h1>Captain's Log</h1>
+    <h3>New entry: <input type="text" id="msg" name="msg" size="30" /></h3>
+    <div id="log"></div>
+</body>
+</html>
+
 
         
             // Your work will be done here...
