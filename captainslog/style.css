@@ -1,6 +1,15 @@
-#log{
-	font-family: Arial,
+#msg {
+	font-family: Arial;
+	color: red;
+	height: 100%;
+	width: 100%;
+	background-color: #FFFFFF;
+}
+
+#log {
+	font-family: Arial;
 	color: blue;
 	height: 100%;
 	width: 100%;
+	background-color: #FFFFFF;
 }
